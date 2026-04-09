@@ -32,6 +32,13 @@ export const runCode = async (language, sourceCode, args = []) => {
     if (!response.ok) {
         throw new Error(data.message || 'Execution failed');
     }
+
+    if (data.message && data.message.toLowerCase().includes("whitelist")) {
+        throw new Error(data.message);
+    }
+    if (data.run?.stderr && data.run.stderr.toLowerCase().includes("whitelist")) {
+        throw new Error(data.run.stderr);
+    }
     
     return {
       run: data.run,
