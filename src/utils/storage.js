@@ -11,12 +11,12 @@ export const getHackerAlias = () => {
 export const getUnlockedThemes = () => {
   try {
     const data = localStorage.getItem('unlockedThemes');
-    const parsed = data ? JSON.parse(data) : [1]; // Theme 1 is always unlocked
+    const parsed = data ? JSON.parse(data) : [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]; // All themes unlocked!
     // Validate if parsed data is an array
     if (Array.isArray(parsed)) return parsed;
-    return [1];
+    return [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
   } catch (e) {
-    return [1];
+    return [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
   }
 };
 
