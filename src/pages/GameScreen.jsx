@@ -7,6 +7,20 @@ import { themes } from '../data/themes';
 import { runCode } from '../utils/pistonAPI';
 import { calculateScore, saveScore, unlockNextTheme, getHackerAlias } from '../utils/storage';
 
+const TypewriterText = ({ text }) => {
+  const [displayed, setDisplayed] = useState('');
+  useEffect(() => {
+    let i = 0;
+    const timer = setInterval(() => {
+      setDisplayed(text.substring(0, i + 1));
+      i++;
+      if (i >= text.length) clearInterval(timer);
+    }, 40);
+    return () => clearInterval(timer);
+  }, [text]);
+  return <span>{displayed}<span className="animate-pulse">_</span></span>;
+};
+
 export default function GameScreen() {
   const { themeId } = useParams();
   const navigate = useNavigate();
@@ -25,7 +39,7 @@ export default function GameScreen() {
   const [timeLeft, setTimeLeft] = useState(0);
   const [hintsUsed, setHintsUsed] = useState(0);
   const [showHint, setShowHint] = useState(false);
-  const [gameStatus, setGameStatus] = useState('playing'); // playing, completed, failed
+  const [gameStatus, setGameStatus] = useState('intro'); // intro, playing, completed, failed
   
   // Load level data
   useEffect(() => {
@@ -90,10 +104,11 @@ export default function GameScreen() {
 
     // Evaluate test cases
     const cases = levelData.testCases;
+    const finalCode = code + (levelData.driverCode?.[language] || "");
     
     for (let i = 0; i < cases.length; i++) {
         const tc = cases[i];
-        const res = await runCode(language, code, [tc.input]);
+        const res = await runCode(language, finalCode, [tc.input]);
         
         let passed = false;
         let actualOutput = "";
@@ -143,6 +158,31 @@ export default function GameScreen() {
   };
 
   if (!theme) return null;
+  
+  if (gameStatus === 'intro') {
+      return (
+        <div className="h-screen flex flex-col items-center justify-center p-4 bg-[var(--color-dark)] relative overflow-hidden">
+            <div className="absolute inset-0 pointer-events-none opacity-10" style={{ backgroundImage: 'linear-gradient(rgba(0, 255, 0, 0.2) 1px, transparent 1px)', backgroundSize: '100% 4px' }}></div>
+            <div className="max-w-3xl w-full flex flex-col items-center z-10">
+                <span className="text-7xl mb-6 drop-shadow-[0_0_15px_rgba(0,255,255,0.5)]">{theme.icon}</span>
+                <h1 className="text-4xl md:text-6xl font-black mb-4 text-[var(--color-cyan-400)] text-shadow-glow text-center uppercase tracking-widest">{theme.name}</h1>
+                <h2 className="text-lg md:text-xl text-gray-400 mb-12 uppercase tracking-widest text-center border-b border-gray-800 pb-4 w-full">{theme.subtitle}</h2>
+                
+                <div className="text-left w-full text-xl md:text-2xl text-[var(--color-primary)] font-mono leading-relaxed mb-16 h-32 md:h-24 px-4 border-l-2 border-[var(--color-primary)] bg-black/40 py-4">
+                   <TypewriterText text={theme.story} />
+                </div>
+
+                <button 
+                  onClick={() => setGameStatus('playing')}
+                  className="px-10 py-4 bg-transparent border-2 border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-black transition-all font-bold tracking-widest uppercase shadow-[0_0_15px_rgba(0,255,0,0.2)] hover:shadow-[0_0_25px_rgba(0,255,0,0.5)] flex items-center gap-3"
+                >
+                  <Play size={20} /> INITIALIZE MISSION
+                </button>
+            </div>
+        </div>
+      );
+  }
+
   if (!levelData && gameStatus === 'playing') return <div className="text-white p-8">Loading level...</div>;
 
   if (gameStatus === 'completed') {
@@ -182,15 +222,16 @@ export default function GameScreen() {
 
   if (gameStatus === 'failed') {
       return (
-        <div className="h-screen flex flex-col items-center justify-center p-4">
-            <h1 className="text-6xl font-black mb-4 text-red-500 text-shadow-[0_0_15px_rgba(255,0,0,0.8)]">TIME EXPIRED</h1>
-            <p className="text-xl mb-8">The system locked you out.</p>
+        <div className="h-screen flex flex-col items-center justify-center p-4 relative overflow-hidden">
+            <div className="absolute inset-0 pointer-events-none opacity-20" style={{ backgroundImage: 'linear-gradient(rgba(255, 0, 0, 0.2) 1px, transparent 1px)', backgroundSize: '100% 4px' }}></div>
+            <h1 className="text-6xl md:text-8xl font-black mb-6 text-red-500 text-shadow-[0_0_25px_rgba(255,0,0,0.8)] z-10 text-center tracking-widest">TIME EXPIRED</h1>
+            <p className="text-xl md:text-2xl mb-12 font-mono text-gray-300 z-10">The system locked you out.</p>
             <button 
                 onClick={() => {
                     setGameStatus('playing');
                     setCurrentLevelNum(1); // Restart from level 1
                 }}
-                className="px-8 py-3 border border-red-500 text-red-500 hover:bg-red-500 hover:text-black transition-colors font-bold"
+                className="z-10 px-10 py-4 border-2 border-red-500 text-red-500 hover:bg-red-500 hover:text-black transition-all font-bold tracking-widest uppercase shadow-[0_0_15px_rgba(255,0,0,0.4)] hover:shadow-[0_0_25px_rgba(255,0,0,0.8)]"
             >
                 REBOOT SYSTEM (Try Again)
             </button>
