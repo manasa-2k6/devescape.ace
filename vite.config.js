@@ -3,6 +3,6 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
-  base: "/devescape_ace/",
+  base: "/devescape.ace/",
   plugins: [react(), tailwindcss()],
 })
